@@ -1,0 +1,14 @@
+[flake8]
+max-line-length = 79
+extend-ignore = E501, W503, E203, E402, E712
+exclude =
+    .git,
+    backend/alembic/versions/*,
+    backend/db/base.py,
+    __pycache__,
+    .tox,
+    .eggs,
+    *.egg,
+    .venv,
+    venv,
+    alembic/
