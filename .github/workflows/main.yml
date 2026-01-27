@@ -1,0 +1,32 @@
+name: Satire Pulp parser
+
+on: [push]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+      
+      - name: Isort Check
+        run: isort --check .
+
+      - name: Black Check
+        run: black --check .
+
+      - name: Flake8 Check
+        run: flake8 .
