@@ -15,6 +15,8 @@ def init_db():
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     url TEXT UNIQUE,
                     title TEXT,
+                    image TEXT,
+                    text TEXT,
                     create_at TEXT
                 )
 """)
@@ -32,12 +34,34 @@ def is_news_exists(url):
         return cursor.fetchone() is not None
 
 
-def save_news(url, title):
+def save_news(url, title, image, text):
     with get_connecttion() as conn:
         conn.execute(
             """
-                INSERT INTO news (url, title, create_at) VALUES (?, ?, ?)
+                INSERT INTO news (url, title, image, text, create_at) VALUES (?, ?, ?, ?, ?)
 """,
-            (url, title, datetime.now(timezone.utc).isoformat()),
+            (url, title, image, text, datetime.now(timezone.utc).isoformat()),
         )
         conn.commit()
+
+
+def get_last_news(limit=5):
+    with get_connecttion() as conn:
+        curcor = conn.execute(
+            """
+                SELECT title, image, text, url FROM news ORDER BY id DESC LIMIT ?
+""",
+            (limit,),
+        )
+    return curcor.fetchall()
+
+
+def get_news_id(last_id):
+    with get_connecttion() as conn:
+        cursor = conn.execute(
+            """
+                SELECT id, title, text, image, url FORM news WHERE id > ?
+""",
+            (last_id,),
+        )
+        return cursor.fetchall()
