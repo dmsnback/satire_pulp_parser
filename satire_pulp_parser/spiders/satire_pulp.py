@@ -23,10 +23,16 @@ class SatirePulpSpider(scrapy.Spider):
 
     def parse_news(self, response):
         title = response.css('h1[itemprop="headline"]::text').get()
-        text = response.css("div.entry-contents p::text").getall()
+        text = response.css("div.entry-contents p::text").get()
         image = response.css('meta[itemprop="image"]::attr(content)').get()
-        final_text = " ".join(text).strip()
-        save_news(response.url, title)
+        final_title = title.strip()
+        final_text = text.strip()
+        if image:
+            image = response.urljoin(image).strip()
+
+        else:
+            image = None
+        save_news(response.url, final_title, image, final_text)
         yield {
             "title": title,
             "text": final_text,
