@@ -45,22 +45,11 @@ def save_news(url, title, image, text):
         conn.commit()
 
 
-def get_last_news(limit=5):
-    with get_connecttion() as conn:
-        curcor = conn.execute(
-            """
-                SELECT title, image, text, url FROM news ORDER BY id DESC LIMIT ?
-""",
-            (limit,),
-        )
-    return curcor.fetchall()
-
-
-def get_news_id(last_id):
+def get_news_after_id(last_id):
     with get_connecttion() as conn:
         cursor = conn.execute(
             """
-                SELECT id, title, text, image, url FORM news WHERE id > ?
+                SELECT id, title, image, text, url FROM news WHERE id > ? ORDER BY id ASC
 """,
             (last_id,),
         )
