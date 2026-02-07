@@ -2,9 +2,7 @@ import logging
 import subprocess
 
 from apscheduler.schedulers.blocking import BlockingScheduler
-
 from config import setup_logger
-
 
 setup_logger()
 logger = logging.getLogger(__name__)

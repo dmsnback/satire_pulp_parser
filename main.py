@@ -18,7 +18,6 @@ from telegram.ext import (
     CommandHandler,
 )
 
-
 load_dotenv()
 
 setup_logger()
