@@ -30,7 +30,7 @@ def run_scheduler():
     try:
         logger.info("...Планировщик запущен...")
         run_spider()
-        scheduler.add_job(run_spider, "interval", minutes=1)
+        scheduler.add_job(run_spider, "interval", minutes=30)
         scheduler.start()
     except Exception as e:
         logger.error(f"Ошибкка в планировщике: {e}")
