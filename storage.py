@@ -20,6 +20,12 @@ def init_db():
                     create_at TEXT
                 )
 """)
+        conn.execute("""
+                CREATE TABLE IF NOT EXISTS last_sent_news (
+                     chat_id INTEGER PRIMARY KEY,
+                     last_news_id INTEGER
+                )
+""")
         conn.commit()
 
 
@@ -45,12 +51,46 @@ def save_news(url, title, image, text):
         conn.commit()
 
 
-def get_news_after_id(last_id):
+def get_news_after_id(last_id, n=10):
     with get_connection() as conn:
         cursor = conn.execute(
             """
-                SELECT id, title, image, text, url FROM news WHERE id > ? ORDER BY id ASC
+                SELECT id, title, image, text, url FROM news WHERE id > ? ORDER BY id DESC LIMIT ?
 """,
-            (last_id,),
+            (last_id, n),
         )
-        return cursor.fetchall()
+        return cursor.fetchall()[::-1]
+
+
+def get_last_sent_id(chat_id):
+    with get_connection() as conn:
+        cursor = conn.execute(
+            """
+                SELECT last_news_id FROM last_sent_news WHERE chat_id = ?
+""",
+            (chat_id,),
+        )
+        row = cursor.fetchone()
+        if row:
+            return row[0]
+        else:
+            return 0
+
+
+def save_last_sent_news_id(chat_id, last_id):
+    with get_connection() as conn:
+        conn.execute(
+            """
+                INSERT INTO last_sent_news (chat_id, last_news_id) VALUES (?, ?)
+                ON CONFLICT(chat_id) DO UPDATE SET last_news_id = excluded.last_news_id""",
+            (chat_id, last_id),
+        )
+        conn.commit()
+
+
+def get_all_users():
+    with get_connection() as conn:
+        cursor = conn.execute("""
+                SELECT chat_id FROM last_sent_news
+""")
+        return [row[0] for row in cursor.fetchall()]

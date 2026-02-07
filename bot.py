@@ -1,9 +1,13 @@
 import logging
-import os
 
 from config import setup_logger
 from dotenv import load_dotenv
-from storage import get_news_after_id
+from storage import (
+    get_all_users,
+    get_last_sent_id,
+    get_news_after_id,
+    save_last_sent_news_id,
+)
 from telegram import (
     BotCommand,
     InlineKeyboardButton,
@@ -19,7 +23,6 @@ logger = logging.getLogger(__name__)
 
 
 MAX_CAPTION_LENGTH = 1024
-LAST_ID_FILE = "last_id.txt"
 
 
 def format_message(title, text):
@@ -27,20 +30,6 @@ def format_message(title, text):
     if len(message) > MAX_CAPTION_LENGTH:
         message = f"*{title}*\n\n{text[:MAX_CAPTION_LENGTH]} ...✂️\n"
     return message
-
-
-def get_last_sent_id():
-    """Получение id последней новости"""
-    if not os.path.exists(LAST_ID_FILE):
-        return 0
-    with open(LAST_ID_FILE, "r") as f:
-        return int(f.read())
-
-
-def save_last_sent_id(last_id):
-    """Сохранение id последней новости"""
-    with open(LAST_ID_FILE, "w") as f:
-        f.write(str(last_id))
 
 
 async def send_news(
@@ -78,20 +67,32 @@ async def send_news(
 
 
 async def auto_send_news(context: ContextTypes.DEFAULT_TYPE):
-    chat_id = os.getenv("TELEGRAM_CHAT_ID")
-    last_id = get_last_sent_id()
-    news_list = get_news_after_id(last_id)
-    if not news_list:
+    users = get_all_users()
+    if not users:
         return
-    for news_id, title, image, text, url in news_list:
-        try:
-            await send_news(chat_id, context, title, image, text, url)
-            save_last_sent_id(news_id)
-        except Exception as e:
-            logger.error(f"Ошибка при автоматической отправке новости: {e}")
+    for chat_id in users:
+        last_id = get_last_sent_id(chat_id)
+        news_list = get_news_after_id(last_id)
+        if not news_list:
+            return
+        for news_id, title, image, text, url in news_list:
+            try:
+                await send_news(chat_id, context, title, image, text, url)
+                save_last_sent_news_id(chat_id, news_id)
+            except Exception as e:
+                logger.error(
+                    f"Ошибка при автоматической отправке новости: {e}"
+                )
 
 
 async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # chat_id = update.message.chat_id
+    welcome_text = (
+        "Привеет\!\n"
+        "Я бот, который присылает сатирические новости с сайта [*Панорама*](https://panorama.pub)\.\n\n"
+        "Нажмите 📰 '*Показать новости*', чтобы получить новости\.\n\n"
+        "Если на сайте появится новая новость \- я пришлю её\."
+    )
     keyboard = [
         [
             InlineKeyboardButton(
@@ -102,7 +103,7 @@ async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(
-        "Выберите действие:", reply_markup=reply_markup
+        welcome_text, reply_markup=reply_markup, parse_mode="MarkdownV2"
     )
 
 
@@ -113,32 +114,31 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logger.warning(f"callback_query не удалось ответить: {e}")
     if query.data == "send_news":
-
-        last_id = get_last_sent_id()
+        chat_id = query.message.chat_id
+        last_id = get_last_sent_id(chat_id)
         news_list = get_news_after_id(last_id)
         if not news_list:
-            await query.message.reply_text("Новостей пока нет 🙁")
-            logger.info("Новостей нет")
+            await query.message.reply_text("Новых новостей пока нет 🙁")
+            logger.info("Новых новостей нет")
             return
         for news_id, title, image, text, url in news_list:
             try:
-                await send_news(
-                    query.message.chat_id, context, title, image, text, url
-                )
-                save_last_sent_id(news_id)
+                await send_news(chat_id, context, title, image, text, url)
+                save_last_sent_news_id(chat_id, news_id)
             except Exception as e:
                 logger.error(
                     f"Ошибка при отправке новости '{title[:25]}': {e}"
                 )
     elif query.data == "help":
-        help_text = "Нажмите 📰 'Показать blaновости', чтобы получить новости."
+        help_text = "Нажмите 📰 'Показать новости', чтобы получить новости."
         await query.message.reply_text(help_text)
 
 
 async def show_news_command(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ):
-    last_id = get_last_sent_id()
+    chat_id = update.message.chat_id
+    last_id = get_last_sent_id(chat_id)
     news_list = get_news_after_id(last_id)
     if not news_list:
         await update.message.reply_text("Новостей пока нет 🙁")
@@ -146,10 +146,8 @@ async def show_news_command(
         return
     try:
         for news_id, title, image, text, url in news_list:
-            await send_news(
-                update.message.chat_id, context, title, image, text, url
-            )
-            save_last_sent_id(news_id)
+            await send_news(chat_id, context, title, image, text, url)
+            save_last_sent_news_id(chat_id, news_id)
     except Exception as e:
         logger.error(f"Ошибка при отправке новости '{title[:25]}': {e}")
 
