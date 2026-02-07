@@ -4,12 +4,12 @@ from datetime import datetime, timezone
 DB_NAME = "satire_pulp.db"
 
 
-def get_connecttion():
+def get_connection():
     return sqlite3.connect(DB_NAME)
 
 
 def init_db():
-    with get_connecttion() as conn:
+    with get_connection() as conn:
         conn.execute("""
                 CREATE TABLE IF NOT EXISTS news (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -24,7 +24,7 @@ def init_db():
 
 
 def is_news_exists(url):
-    with get_connecttion() as conn:
+    with get_connection() as conn:
         cursor = conn.execute(
             """
                 SELECT 1 FROM news WHERE url = ?
@@ -35,7 +35,7 @@ def is_news_exists(url):
 
 
 def save_news(url, title, image, text):
-    with get_connecttion() as conn:
+    with get_connection() as conn:
         conn.execute(
             """
                 INSERT INTO news (url, title, image, text, create_at) VALUES (?, ?, ?, ?, ?)
@@ -46,7 +46,7 @@ def save_news(url, title, image, text):
 
 
 def get_news_after_id(last_id):
-    with get_connecttion() as conn:
+    with get_connection() as conn:
         cursor = conn.execute(
             """
                 SELECT id, title, image, text, url FROM news WHERE id > ? ORDER BY id ASC
