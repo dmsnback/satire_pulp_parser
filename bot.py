@@ -1,13 +1,14 @@
 import logging
 
-from config import setup_logger
-from dotenv import load_dotenv
-from storage import (
+from bot_storage import (
     get_all_users,
     get_last_sent_id,
     get_news_after_id,
     save_last_sent_news_id,
 )
+from config import setup_logger
+from db_async import AsyncSessionLocal
+from dotenv import load_dotenv
 from telegram import (
     BotCommand,
     InlineKeyboardButton,
@@ -67,22 +68,30 @@ async def send_news(
 
 
 async def auto_send_news(context: ContextTypes.DEFAULT_TYPE):
-    users = get_all_users()
-    if not users:
-        return
-    for chat_id in users:
-        last_id = get_last_sent_id(chat_id)
-        news_list = get_news_after_id(last_id)
-        if not news_list:
+    async with AsyncSessionLocal() as session:
+        users = await get_all_users(session)
+        if not users:
             return
-        for news_id, title, image, text, url in news_list:
-            try:
-                await send_news(chat_id, context, title, image, text, url)
-                save_last_sent_news_id(chat_id, news_id)
-            except Exception as e:
-                logger.error(
-                    f"Ошибка при автоматической отправке новости: {e}"
-                )
+        for chat_id in users:
+            last_id = await get_last_sent_id(chat_id, session)
+            news_list = await get_news_after_id(last_id, session)
+            if not news_list:
+                continue
+            for news in news_list:
+                try:
+                    await send_news(
+                        chat_id,
+                        context,
+                        news.title,
+                        news.image,
+                        news.text,
+                        news.url,
+                    )
+                    await save_last_sent_news_id(chat_id, news.id, session)
+                except Exception as e:
+                    logger.error(
+                        f"Ошибка при автоматической отправке новости: {e}"
+                    )
 
 
 async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -115,20 +124,28 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.warning(f"callback_query не удалось ответить: {e}")
     if query.data == "send_news":
         chat_id = query.message.chat_id
-        last_id = get_last_sent_id(chat_id)
-        news_list = get_news_after_id(last_id)
-        if not news_list:
-            await query.message.reply_text("Новых новостей пока нет 🙁")
-            logger.info("Новых новостей нет")
-            return
-        for news_id, title, image, text, url in news_list:
-            try:
-                await send_news(chat_id, context, title, image, text, url)
-                save_last_sent_news_id(chat_id, news_id)
-            except Exception as e:
-                logger.error(
-                    f"Ошибка при отправке новости '{title[:25]}': {e}"
-                )
+        async with AsyncSessionLocal() as session:
+            last_id = await get_last_sent_id(chat_id, session)
+            news_list = await get_news_after_id(last_id, session)
+            if not news_list:
+                await query.message.reply_text("Новых новостей пока нет 🙁")
+                logger.info("Новых новостей нет")
+                return
+            for news in news_list:
+                try:
+                    await send_news(
+                        chat_id,
+                        context,
+                        news.title,
+                        news.image,
+                        news.text,
+                        news.url,
+                    )
+                    await save_last_sent_news_id(chat_id, news.id, session)
+                except Exception as e:
+                    logger.error(
+                        f"Ошибка при отправке новости '{news.title[:25]}': {e}"
+                    )
     elif query.data == "help":
         help_text = "Нажмите 📰 'Показать новости', чтобы получить новости."
         await query.message.reply_text(help_text)
@@ -138,18 +155,28 @@ async def show_news_command(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ):
     chat_id = update.message.chat_id
-    last_id = get_last_sent_id(chat_id)
-    news_list = get_news_after_id(last_id)
-    if not news_list:
-        await update.message.reply_text("Новостей пока нет 🙁")
-        logger.info("Новостей нет")
-        return
-    try:
-        for news_id, title, image, text, url in news_list:
-            await send_news(chat_id, context, title, image, text, url)
-            save_last_sent_news_id(chat_id, news_id)
-    except Exception as e:
-        logger.error(f"Ошибка при отправке новости '{title[:25]}': {e}")
+    async with AsyncSessionLocal() as session:
+        last_id = await get_last_sent_id(chat_id, session)
+        news_list = await get_news_after_id(last_id, session)
+        if not news_list:
+            await update.message.reply_text("Новостей пока нет 🙁")
+            logger.info("Новостей нет")
+            return
+        try:
+            for news in news_list:
+                await send_news(
+                    chat_id,
+                    context,
+                    news.title,
+                    news.image,
+                    news.text,
+                    news.url,
+                )
+                await save_last_sent_news_id(chat_id, news.id, session)
+        except Exception as e:
+            logger.error(
+                f"Ошибка при отправке новости '{news.title[:25]}': {e}"
+            )
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):

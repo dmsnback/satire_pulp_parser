@@ -12,7 +12,6 @@ from bot import (
 )
 from config import setup_logger
 from dotenv import load_dotenv
-from storage import init_db
 from telegram.ext import (
     ApplicationBuilder,
     CallbackQueryHandler,
@@ -26,7 +25,6 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    init_db()
     app = ApplicationBuilder().token(os.getenv("TELEGRAM_TOKEN")).build()
     app.job_queue.run_repeating(auto_send_news, interval=600, first=10)
     app.add_handler(CommandHandler("start", menu))

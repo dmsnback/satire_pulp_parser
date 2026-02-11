@@ -1,12 +1,9 @@
 import scrapy
-from storage import init_db, is_news_exists, save_news
+from db_sync import SessionLocal
+from spider_storage import is_news_exists, save_news
 
 
 class SatirePulpSpider(scrapy.Spider):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        init_db()
-
     name = "satire_pulp"
     allowed_domains = ["panorama.pub"]
     start_urls = ["https://panorama.pub"]
@@ -15,9 +12,10 @@ class SatirePulpSpider(scrapy.Spider):
         news_links = response.css("div.shrink-0 li a::attr(href)").getall()
         for link in news_links:
             full_link = response.urljoin(link)
-            if is_news_exists(full_link):
-                self.logger.info(f"Новость уже есть: {full_link}")
-                continue
+            with SessionLocal() as session:
+                if is_news_exists(full_link, session):
+                    self.logger.info(f"Новость уже есть: {full_link}")
+                    continue
 
             yield scrapy.Request(url=full_link, callback=self.parse_news)
 
@@ -32,7 +30,8 @@ class SatirePulpSpider(scrapy.Spider):
 
         else:
             image = None
-        save_news(response.url, final_title, image, final_text)
+        with SessionLocal() as session:
+            save_news(response.url, final_title, image, final_text, session)
         yield {
             "title": title,
             "text": final_text,
