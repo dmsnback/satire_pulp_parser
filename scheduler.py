@@ -26,11 +26,12 @@ def run_spider():
 
 
 def run_scheduler():
+    """Запуск планировщика, паук запускаеется каждые 20 минут"""
     scheduler = BlockingScheduler()
     try:
         logger.info("...Планировщик запущен...")
         run_spider()
-        scheduler.add_job(run_spider, "interval", minutes=30)
+        scheduler.add_job(run_spider, "interval", minutes=20)
         scheduler.start()
     except Exception as e:
         logger.error(f"Ошибкка в планировщике: {e}")
