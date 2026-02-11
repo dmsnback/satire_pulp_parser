@@ -17,7 +17,7 @@ def is_news_exists(url: str, session):
 
 
 def save_news(url: str, title: str, image: str, text: str, session):
-    """Созранение новости в базе."""
+    """Созранение новости в базе"""
     try:
         news = News(url=url, title=title, image=image, text=text)
         session.add(news)
