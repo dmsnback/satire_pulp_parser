@@ -1,6 +1,7 @@
 import scrapy
-from db_sync import SessionLocal
-from spider_storage import is_news_exists, save_news
+from db.db_sync import SessionLocal
+from satire_pulp_parser.items import NewsItem
+from satire_pulp_parser.spider_storage import is_news_exists
 
 
 class SatirePulpSpider(scrapy.Spider):
@@ -30,11 +31,7 @@ class SatirePulpSpider(scrapy.Spider):
 
         else:
             image = None
-        with SessionLocal() as session:
-            save_news(response.url, final_title, image, final_text, session)
-        yield {
-            "title": title,
-            "text": final_text,
-            "image": image,
-            "url": response.url,
-        }
+        item = NewsItem(
+            title=final_title, text=final_text, image=image, url=response.url
+        )
+        yield item

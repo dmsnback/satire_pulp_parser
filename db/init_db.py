@@ -2,9 +2,9 @@ import asyncio
 import logging
 
 from config import setup_logger
-from db_async import engine
+from db.db_async import engine
+from db.models import Base, LastSentNews, News  # noqa
 from dotenv import load_dotenv
-from models import Base, LastSentNews, News  # noqa
 
 load_dotenv()
 

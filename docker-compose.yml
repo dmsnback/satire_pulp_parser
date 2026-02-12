@@ -8,7 +8,7 @@ services:
     ports:
       - "5432:5432"
     env_file:
-      - ./.env
+      - .env
   
   bot:
     build: .
@@ -16,18 +16,18 @@ services:
     depends_on:
       - db
     env_file:
-      - ./.env
+      - .env
     command: python3 main.py
 
   scheduler:
     build: .
     restart: always
-    command: python3 scheduler.py 
+    command: python3 -m scheduler.scheduler
     depends_on:
       - db
       - bot
     env_file:
-      - ./.env
+      - .env
 
 volumes:
   postgres_data:

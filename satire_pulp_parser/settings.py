@@ -7,7 +7,7 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = "satire_pulp_parser"
+BOT_NAME = "satire_pulp"
 
 SPIDER_MODULES = ["satire_pulp_parser.spiders"]
 NEWSPIDER_MODULE = "satire_pulp_parser.spiders"
@@ -16,7 +16,7 @@ ADDONS = {}
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-# USER_AGENT = "satire_pulp_parser (+http://www.yourdomain.com)"
+USER_AGENT = "satire_pulp (+http://panorama.pub)"
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
@@ -58,9 +58,9 @@ DOWNLOAD_DELAY = 1
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-# ITEM_PIPELINES = {
-#    "satire_pulp_parser.pipelines.SatirePulpParserPipeline": 300,
-# }
+ITEM_PIPELINES = {
+    "satire_pulp_parser.pipelines.SaveNewsPipeline": 300,
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html

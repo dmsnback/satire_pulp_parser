@@ -1,6 +1,6 @@
 import logging
 
-from models import LastSentNews, News
+from db.models import LastSentNews, News
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession

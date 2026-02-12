@@ -7,6 +7,9 @@ from sqlalchemy.orm import sessionmaker
 load_dotenv()
 
 
-engine = create_engine(os.getenv("DATABASE_URL_SYNC"))
+DATABASE_URL_SYNC = os.getenv("DATABASE_URL_SYNC")
+
+
+engine = create_engine(DATABASE_URL_SYNC)
 
 SessionLocal = sessionmaker(engine)
