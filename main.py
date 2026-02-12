@@ -2,7 +2,7 @@ import asyncio
 import logging
 import os
 
-from bot import (
+from bot.handlers import (
     auto_send_news,
     button_handler,
     help_command,

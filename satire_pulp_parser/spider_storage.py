@@ -1,6 +1,6 @@
 import logging
 
-from models import News
+from db.models import News
 from sqlalchemy.exc import SQLAlchemyError
 
 logger = logging.getLogger(__name__)
@@ -23,5 +23,6 @@ def save_news(url: str, title: str, image: str, text: str, session):
         session.add(news)
         session.commit()
     except SQLAlchemyError as e:
+        session.rollback()
         logger.error(f"Ошибка сохранения новости в бд: {e}")
         raise
