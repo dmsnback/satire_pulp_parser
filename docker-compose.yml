@@ -11,7 +11,7 @@ services:
       - .env
   
   bot:
-    build: .
+    image: dmsn/satire_pulp_parser:prod
     restart: always
     depends_on:
       - db
@@ -20,7 +20,7 @@ services:
     command: python3 main.py
 
   scheduler:
-    build: .
+    image: dmsn/satire_pulp_parser:prod
     restart: always
     command: python3 -m scheduler.scheduler
     depends_on:
