@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15.0-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+  
+  bot:
+    image: dmsn/satire_pulp_parser:prod
+    restart: always
+    depends_on:
+      - db
+    env_file:
+      - .env
+    command: python3 main.py
+
+  scheduler:
+    image: dmsn/satire_pulp_parser:prod
+    restart: always
+    command: python3 -m scheduler.scheduler
+    depends_on:
+      - db
+      - bot
+    env_file:
+      - .env
+
+volumes:
+  postgres_data:

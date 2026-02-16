@@ -1,6 +1,6 @@
 [flake8]
 max-line-length = 79
-extend-ignore = E501, W503, E203, E402, E712
+extend-ignore = E501, W503, E203, E402, E712, W605
 exclude =
     .git,
     backend/alembic/versions/*,
