@@ -1,11 +1,9 @@
 import pytest
 import pytest_asyncio
-from sqlalchemy import create_engine
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from sqlalchemy.orm import sessionmaker
-
 from db.models import Base, News
-
+from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.orm import sessionmaker
 
 DATABASE_SYNC_URL = "sqlite:///:memory:"
 DATABASE_ASYNC_URL = "sqlite+aiosqlite:///:memory:"
@@ -35,18 +33,28 @@ async def async_session():
 @pytest.fixture
 def news():
     test_news = {
-        'url': 'https://panorama.pub/test-news',
-        'title': 'Test Title',
-        'text': 'Test Text',
-        'image': None
+        "url": "https://panorama.pub/test-news",
+        "title": "Test Title",
+        "text": "Test Text",
+        "image": None,
     }
     return test_news
 
 
 @pytest_asyncio.fixture
 async def news_list(async_session):
-    first_news = News(url="https://panorama.pub/test-news_1", title="Test Title 1", image=None, text="Ttest Text_1")
-    second_news = News(url="https://panorama.pub/test-news_2", title="Test Title 2", image=None, text="Ttest Text_2")
+    first_news = News(
+        url="https://panorama.pub/test-news_1",
+        title="Test Title 1",
+        image=None,
+        text="Ttest Text_1",
+    )
+    second_news = News(
+        url="https://panorama.pub/test-news_2",
+        title="Test Title 2",
+        image=None,
+        text="Ttest Text_2",
+    )
 
     async_session.add_all([first_news, second_news])
     await async_session.commit()
